@@ -1,0 +1,53 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin="">
+</script>
+<script type="text/javascript" src="data.json"></script>
+
+<style>
+  html {background: #143d6b;}
+  #map { height: 100%; width: 100%; background: #143d6b;}
+  .imgMarker {width: 250;}
+</style>
+
+<div id="map"></div>
+
+<script>
+  var data = JSON.parse(data);
+  const CDN_URL = 'https://gtaguessr.com/satelite/{z}/{x}/{y}.png';
+  const IMG_URL = 'https://gtaguessr.com/guess/';
+  const MAX_ZOOM = 5;
+  const MIN_ZOOM = 1;
+  const MAP_EXTENT = [0, -8192, 8192, 0];
+  const TILE_EXTENT = [0, -8192, 8192, 0];
+  const MAX_RESOLUTUION = .25;
+  const MIN_RESOLUTION = Math.pow(2, (MAX_ZOOM + 1)) * MAX_RESOLUTUION;
+  const CRS = Object.assign(Object.assign({}, L.CRS.Simple), {
+    transformation: new L.Transformation(1, -TILE_EXTENT[0], -1, TILE_EXTENT[3]),
+    scale: (r) => {
+        return Math.pow(2, r) / MIN_RESOLUTION;
+    },
+    zoom: (r) => {
+        return Math.log(r * MIN_RESOLUTION) / Math.LN2;
+    }
+  });
+  var mymap = new L.Map('map', {
+            minZoom: MIN_ZOOM,
+            maxZoom: MAX_ZOOM,
+            crs: CRS,
+            attributionControl: false
+        });
+  data.forEach(l => L.marker([l.lat, l.lon], {}).addTo(mymap).bindPopup( "<div><img class=imgMarker src="+IMG_URL+l.image+"></div>", {minWidth: 150}));
+  L.tileLayer(CDN_URL, {
+      minZoom: MIN_ZOOM,
+      maxZoom: MAX_ZOOM,
+      tileSize: 512,
+      attribution: 'Gtaguessr',
+      noWrap: !0,
+      tms: !1
+  }).addTo(mymap);
+  mymap.fitBounds([CRS.unproject(L.point(MAP_EXTENT[2], MAP_EXTENT[3])), CRS.unproject(L.point(MAP_EXTENT[0], MAP_EXTENT[1]))]);
+</script>
